@@ -1,0 +1,10 @@
+[package]
+name = "agentx"
+version = "0.1.0"
+authors = ["Roland Kammerer <roland.kammerer@linbit.com>"]
+edition = "2018"
+license = "MIT OR Apache-2.0"
+description = "AgentX library implementing all PDU types and encodings according to the standard."
+repository = "https://github.com/LINBIT/agentx-rs"
+
+[dependencies]
