@@ -70,7 +70,7 @@ impl ID {
         // we always normalize IDs, so "prefix" is always 0 in our case
         let mut result = vec![n_subid, 0, self.include, 0];
         for id in &self.sub_ids {
-            result.extend(u32_to_bytes(*id, bo));
+            result.extend(&u32_to_bytes(*id, bo));
         }
 
         result

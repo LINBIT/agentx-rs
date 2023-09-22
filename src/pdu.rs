@@ -88,7 +88,7 @@ impl Header {
         // Header is not a PDU
 
         let mut result = Vec::with_capacity(HEADER_SIZE);
-        result.extend([
+        result.extend(&[
             self.version,
             self.ty.to_byte(),
             self.flags,
@@ -96,10 +96,10 @@ impl Header {
         ]);
 
         let bo = self.byte_order();
-        result.extend(u32_to_bytes(self.session_id, &bo));
-        result.extend(u32_to_bytes(self.transaction_id, &bo));
-        result.extend(u32_to_bytes(self.packet_id, &bo));
-        result.extend(u32_to_bytes(self.payload_length, &bo));
+        result.extend(&u32_to_bytes(self.session_id, &bo));
+        result.extend(&u32_to_bytes(self.transaction_id, &bo));
+        result.extend(&u32_to_bytes(self.packet_id, &bo));
+        result.extend(&u32_to_bytes(self.payload_length, &bo));
 
         result
     }
@@ -183,7 +183,7 @@ impl Open {
             u8::try_from(self.timeout.as_secs()).map_err(|_| ErrorKind::InvalidData)?;
 
         payload.push(timeout_secs);
-        payload.extend([0, 0, 0]); // reserved
+        payload.extend(&[0, 0, 0]); // reserved
         payload.extend(self.id.to_bytes(&bo));
         payload.extend(self.descr.to_bytes(&bo)?);
 
@@ -234,7 +234,7 @@ impl Default for Close {
     fn default() -> Self {
         Self {
             header: Header::new(Type::Close),
-            reason: CloseReason::default(),
+            reason: CloseReason::Other,
         }
     }
 }
@@ -254,7 +254,7 @@ impl Close {
         self.header.payload_length = 4; /* 1 reason + 3 reserved */
         result.extend(self.header.to_bytes());
         result.push(self.reason.to_byte());
-        result.extend([0, 0, 0]); /* reserved */
+        result.extend(&[0, 0, 0]); /* reserved */
 
         Ok(result)
     }
@@ -322,7 +322,7 @@ impl Register {
         let timeout_secs =
             u8::try_from(self.timeout.as_secs()).map_err(|_| ErrorKind::InvalidData)?;
 
-        payload.extend([
+        payload.extend(&[
             timeout_secs,
             self.priority,
             self.range_subid,
@@ -332,7 +332,7 @@ impl Register {
         payload.extend(self.subtree.to_bytes(&bo));
 
         if let Some(u) = &self.upper_bound {
-            payload.extend(u32_to_bytes(*u, &bo));
+            payload.extend(&u32_to_bytes(*u, &bo));
         };
 
         self.header.set_payload_len(payload.len())?;
@@ -424,7 +424,7 @@ impl Unregister {
             payload.extend(c.0.to_bytes(&bo)?);
         };
 
-        payload.extend([
+        payload.extend(&[
             0, /* reserved */
             self.priority,
             self.range_subid,
@@ -434,7 +434,7 @@ impl Unregister {
         payload.extend(self.subtree.to_bytes(&bo));
 
         if let Some(u) = &self.upper_bound {
-            payload.extend(u32_to_bytes(*u, &bo));
+            payload.extend(&u32_to_bytes(*u, &bo));
         };
 
         self.header.set_payload_len(payload.len())?;
@@ -645,8 +645,8 @@ impl GetBulk {
             payload.extend(c.0.to_bytes(&bo)?);
         };
 
-        payload.extend(u16_to_bytes(self.non_repeaters, &bo));
-        payload.extend(u16_to_bytes(self.max_repetitions, &bo));
+        payload.extend(&u16_to_bytes(self.non_repeaters, &bo));
+        payload.extend(&u16_to_bytes(self.max_repetitions, &bo));
         payload.extend(self.sr.to_bytes(&bo));
 
         self.header.set_payload_len(payload.len())?;
@@ -1275,11 +1275,11 @@ impl Response {
         let sys_uptime =
             u32::try_from(self.sys_uptime.as_millis() / 10).map_err(|_| ErrorKind::InvalidData)?;
         let sys_uptime = u32_to_bytes(sys_uptime, &bo);
-        payload.extend(sys_uptime);
+        payload.extend(&sys_uptime);
 
-        payload.extend(self.res_error.to_bytes(&bo));
+        payload.extend(&self.res_error.to_bytes(&bo));
 
-        payload.extend(u16_to_bytes(self.res_index, &bo));
+        payload.extend(&u16_to_bytes(self.res_index, &bo));
 
         if let Some(vb) = &self.vb {
             payload.extend(vb.to_bytes(&bo)?);
@@ -1326,7 +1326,7 @@ impl Response {
 }
 
 /// PDU types
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum Type {
     /// Open
     Open,
@@ -1363,7 +1363,6 @@ pub enum Type {
     /// RemoveAgentCaps
     RemoveAgentCaps,
     /// Response
-    #[default]
     Response,
 }
 
@@ -1421,10 +1420,9 @@ impl Type {
 }
 
 /// an enumerated value that gives the reason that the master agent or subagent closed the AgentX session.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum CloseReason {
     /// none of the following reasons
-    #[default]
     Other,
     /// too many AgentX parse errors from peer
     ParseError,
@@ -1469,10 +1467,9 @@ impl CloseReason {
 
 /// Indicates error status.  Within responses to the set of "administrative" PDU types listed in [Section 6.1](https://datatracker.ietf.org/doc/html/rfc2741#section-6.1), "AgentX PDU Header", values are limited to the following.
 /// Within responses to the set of "SNMP request processing" PDU types listed in [Section 6.1](https://datatracker.ietf.org/doc/html/rfc2741#section-6.1) "AgentX PDU Header", values may also include those defined for errors in the SNMPv2 PDU.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum ResError {
     /// NoAgentXError
-    #[default]
     NoAgentXError,
     /// OpenFailed
     OpenFailed,

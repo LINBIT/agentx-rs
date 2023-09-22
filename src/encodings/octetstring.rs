@@ -39,7 +39,7 @@ impl OctetString {
         let len = u32_to_bytes(len, bo);
 
         let mut result = Vec::new();
-        result.extend(len);
+        result.extend(&len);
         result.extend(content);
 
         Ok(result)

@@ -12,7 +12,7 @@ use crate::{
 };
 
 /// VarBind as defined in [Section 5.4](https://datatracker.ietf.org/doc/html/rfc2741#section-5.4)
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct VarBind {
     /// OID name of the VarBind
     pub name: ID,
@@ -20,15 +20,23 @@ pub struct VarBind {
     pub data: Value,
 }
 
+impl Default for VarBind {
+    fn default() -> Self {
+        Self {
+            name: Default::default(),
+            data: Value::Null,
+        }
+    }
+}
+
 /// Value as defined in [Section 5.4](https://datatracker.ietf.org/doc/html/rfc2741#section-5.4)
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum Value {
     /// 4 byte (signed) integer type
     Integer(i32),
     /// OctetString
     OctetString(OctetString),
     /// null type (does not contain encoded value)
-    #[default]
     Null,
     /// Object identifier
     ObjectIdentifier(ID),
@@ -100,8 +108,8 @@ impl VarBind {
             Value::EndOfMibView => (130, vec![]),
         };
 
-        result.extend(u16_to_bytes(ty, bo));
-        result.extend([0, 0]); /* reserved */
+        result.extend(&u16_to_bytes(ty, bo));
+        result.extend(&[0, 0]); /* reserved */
         result.extend(self.name.to_bytes(bo));
         result.extend(data);
 
